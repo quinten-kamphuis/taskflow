@@ -8,8 +8,7 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
     ~H"""
     <div>
       <.header>
-        <%= @title %>
-        <:subtitle>Use this form to manage project records in your database.</:subtitle>
+        {@title}
       </.header>
 
       <.simple_form
@@ -20,8 +19,13 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
         phx-submit="save"
       >
         <.input field={@form[:name]} type="text" label="Name" />
-        <.input field={@form[:description]} type="text" label="Description" />
-        <.input field={@form[:status]} type="text" label="Status" />
+        <.input field={@form[:description]} type="textarea" label="Description" />
+        <.input
+          field={@form[:status]}
+          type="select"
+          label="Status"
+          options={[{"Active", "active"}, {"Completed", "completed"}]}
+        />
         <:actions>
           <.button phx-disable-with="Saving...">Save Project</.button>
         </:actions>
@@ -32,21 +36,26 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
 
   @impl true
   def update(%{project: project} = assigns, socket) do
+    changeset = Projects.change_project(project)
+
     {:ok,
      socket
      |> assign(assigns)
-     |> assign_new(:form, fn ->
-       to_form(Projects.change_project(project))
-     end)}
+     |> assign_form(changeset)}
   end
 
   @impl true
   def handle_event("validate", %{"project" => project_params}, socket) do
-    changeset = Projects.change_project(socket.assigns.project, project_params)
-    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+    changeset =
+      socket.assigns.project
+      |> Projects.change_project(project_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign_form(socket, changeset)}
   end
 
   def handle_event("save", %{"project" => project_params}, socket) do
+    project_params = Map.put(project_params, "user_id", socket.assigns.current_user.id)
     save_project(socket, socket.assigns.action, project_params)
   end
 
@@ -58,10 +67,10 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Project updated successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> push_patch(to: socket.assigns.return_to)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+        {:noreply, assign_form(socket, changeset)}
     end
   end
 
@@ -73,11 +82,15 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Project created successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> push_patch(to: socket.assigns.return_to)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+        {:noreply, assign_form(socket, changeset)}
     end
+  end
+
+  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
+    assign(socket, :form, to_form(changeset))
   end
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})

@@ -66,6 +66,10 @@ defmodule TaskflowWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{TaskflowWeb.UserAuth, :ensure_authenticated}] do
+      live "/projects", ProjectLive.Index, :index
+      live "/projects/new", ProjectLive.Index, :new
+      live "/projects/:id/edit", ProjectLive.Index, :edit
+
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end
