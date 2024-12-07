@@ -65,6 +65,17 @@ defmodule TaskflowWeb.ProjectLive.Index do
   end
 
   @impl true
+  def handle_info({TaskflowWeb.ProjectLive.FormComponent, {:saved, project}}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(
+       :info,
+       "Project #{if project.status == "archived", do: "archived", else: "saved"} successfully"
+     )
+     |> push_navigate(to: ~p"/projects")}
+  end
+
+  @impl true
   def handle_info({:project_updated, project}, socket) do
     {:noreply,
      update(socket, :projects, fn projects ->

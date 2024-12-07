@@ -63,11 +63,7 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
     case Projects.update_project(socket.assigns.project, project_params) do
       {:ok, project} ->
         notify_parent({:saved, project})
-
-        {:noreply,
-         socket
-         |> put_flash(:info, "Project updated successfully")
-         |> push_patch(to: socket.assigns.return_to)}
+        {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, changeset)}
@@ -78,11 +74,7 @@ defmodule TaskflowWeb.ProjectLive.FormComponent do
     case Projects.create_project(project_params) do
       {:ok, project} ->
         notify_parent({:saved, project})
-
-        {:noreply,
-         socket
-         |> put_flash(:info, "Project created successfully")
-         |> push_patch(to: socket.assigns.return_to)}
+        {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, changeset)}
