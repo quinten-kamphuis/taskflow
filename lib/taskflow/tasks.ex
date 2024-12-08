@@ -84,6 +84,13 @@ defmodule Taskflow.Tasks do
     |> Repo.insert()
   end
 
+  def delete_attachment(%Attachment{} = attachment) do
+    file_path = Path.join("priv/static", attachment.path)
+    File.rm(file_path)
+
+    Repo.delete(attachment)
+  end
+
   def get_task_with_attachments(id) do
     Task
     |> where(id: ^id)

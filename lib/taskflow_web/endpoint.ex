@@ -25,6 +25,13 @@ defmodule TaskflowWeb.Endpoint do
     gzip: false,
     only: TaskflowWeb.static_paths()
 
+  plug Plug.Static,
+    # This means files will be served at /uploads path
+    at: "/uploads",
+    # Absolute path to uploads directory
+    from: Path.expand("../../priv/static/uploads", __DIR__),
+    gzip: false
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do

@@ -87,6 +87,20 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
     {:noreply, cancel_upload(socket, :attachment, ref)}
   end
 
+  @impl true
+  def handle_event("delete_attachment", %{"id" => id}, socket) do
+    attachment = Enum.find(socket.assigns.task.attachments, &(&1.id == id))
+
+    case Tasks.delete_attachment(attachment) do
+      {:ok, _} ->
+        task = Tasks.get_task_with_attachments(socket.assigns.task.id)
+        {:noreply, assign(socket, :task, task)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete attachment")}
+    end
+  end
+
   defp handle_progress(:attachment, entry, socket) do
     # Debug log
     IO.puts("Upload progress: #{entry.progress}%")
@@ -99,6 +113,7 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
         filename = "#{System.system_time(:second)}_#{entry.client_name}"
         dest = Path.join("priv/static/uploads", filename)
 
+        File.mkdir_p!(Path.dirname(dest))
         File.cp!(path, dest)
 
         case Tasks.create_attachment(%{
