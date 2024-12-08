@@ -2,6 +2,7 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
   use TaskflowWeb, :live_component
 
   alias Taskflow.Comments
+  alias Taskflow.Tasks
 
   @impl true
   def mount(socket) do
@@ -11,7 +12,9 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
      |> allow_upload(:attachment,
        accept: :any,
        max_entries: 5,
-       max_file_size: Application.get_env(:taskflow, :max_upload_size)
+       max_file_size: Application.get_env(:taskflow, :max_upload_size),
+       auto_upload: true,
+       progress: &handle_progress/3
      )}
   end
 
@@ -48,11 +51,79 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
     end
   end
 
+  @impl true
+  def handle_event("validate", params, socket) do
+    IO.puts("Validate event received: #{inspect(params)}")
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("upload_completed", _params, socket) do
+    consume_uploaded_entries(socket, :attachment, fn %{path: path}, entry ->
+      filename = "#{System.system_time(:second)}_#{entry.client_name}"
+      dest = Path.join("priv/static/uploads", filename)
+
+      File.cp!(path, dest)
+
+      Tasks.create_attachment(%{
+        filename: entry.client_name,
+        path: "/uploads/#{filename}",
+        content_type: entry.client_type,
+        task_id: socket.assigns.task.id,
+        user_id: socket.assigns.current_user.id
+      })
+    end)
+
+    task = Tasks.get_task_with_attachments(socket.assigns.task.id)
+
+    {:noreply, assign(socket, :task, task)}
+  end
+
   def handle_event("close_modal", _, socket) do
     {:noreply, push_patch(socket, to: ~p"/projects/#{socket.assigns.project.id}/tasks")}
   end
 
   def handle_event("cancel_upload", %{"ref" => ref}, socket) do
     {:noreply, cancel_upload(socket, :attachment, ref)}
+  end
+
+  defp handle_progress(:attachment, entry, socket) do
+    # Debug log
+    IO.puts("Upload progress: #{entry.progress}%")
+
+    if entry.progress == 100 do
+      consume_uploaded_entries(socket, :attachment, fn %{path: path}, entry ->
+        # Debug log
+        IO.puts("Processing uploaded file: #{entry.client_name}")
+
+        filename = "#{System.system_time(:second)}_#{entry.client_name}"
+        dest = Path.join("priv/static/uploads", filename)
+
+        File.cp!(path, dest)
+
+        case Tasks.create_attachment(%{
+               filename: entry.client_name,
+               path: "/uploads/#{filename}",
+               content_type: entry.client_type,
+               task_id: socket.assigns.task.id,
+               user_id: socket.assigns.current_user.id
+             }) do
+          {:ok, attachment} ->
+            # Debug log
+            IO.puts("Attachment created successfully")
+            {:ok, attachment}
+
+          {:error, changeset} ->
+            # Debug log
+            IO.puts("Error creating attachment: #{inspect(changeset)}")
+            {:error, changeset}
+        end
+      end)
+
+      task = Tasks.get_task_with_attachments(socket.assigns.task.id)
+      {:noreply, assign(socket, :task, task)}
+    else
+      {:noreply, socket}
+    end
   end
 end

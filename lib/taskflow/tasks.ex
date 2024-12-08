@@ -6,6 +6,7 @@ defmodule Taskflow.Tasks do
   import Ecto.Query, warn: false
   alias Taskflow.Repo
   alias Taskflow.Tasks.Task
+  alias Taskflow.Attachments.Attachment
 
   @doc """
   Returns the list of tasks for a specific project.
@@ -33,6 +34,7 @@ defmodule Taskflow.Tasks do
     |> where(project_id: ^project_id)
     |> where(id: ^id)
     |> preload(:user)
+    |> preload([:attachments, :user])
     |> Repo.one()
   end
 
@@ -74,5 +76,18 @@ defmodule Taskflow.Tasks do
   def change_task(%Task{} = task, attrs \\ %{}) do
     task
     |> Task.changeset(attrs)
+  end
+
+  def create_attachment(attrs \\ %{}) do
+    %Attachment{}
+    |> Attachment.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def get_task_with_attachments(id) do
+    Task
+    |> where(id: ^id)
+    |> preload([:attachments, :user])
+    |> Repo.one()
   end
 end
