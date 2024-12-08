@@ -84,6 +84,14 @@ defmodule TaskflowWeb.TaskLive.Index do
     |> assign(:task, nil)
   end
 
+  defp apply_action(socket, :show, %{"id" => id}) do
+    task = Tasks.get_project_task(socket.assigns.project.id, id)
+
+    socket
+    |> assign(:page_title, task.title)
+    |> assign(:task, task)
+  end
+
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     task = Tasks.get_project_task(socket.assigns.project.id, id)

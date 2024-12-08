@@ -34,54 +34,58 @@
 
         <div class="bg-white rounded-b-lg border border-gray-200 min-h-[500px]">
           <div class="divide-y divide-gray-200">
-            <%= for task <- tasks do %>
-              <div
-                class="p-4 hover:bg-gray-50 cursor-move"
-                draggable="true"
-                phx-hook="DragSource"
-                id={"task-#{task.id}"}
-                data-task-id={task.id}
-              >
-                <div class="flex items-start justify-between">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <p class="text-sm font-medium text-gray-900">{task.title}</p>
-                      <span class={[
-                        "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
-                        priority_color(task.priority)
-                      ]}>
-                        {task.priority}
-                      </span>
-                    </div>
-                    <%= if task.description do %>
-                      <p class="mt-1 text-sm text-gray-500 line-clamp-2">{task.description}</p>
-                    <% end %>
-                    <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                      <%= if task.due_date do %>
-                        <div class="flex items-center gap-1">
-                          <.icon name="hero-calendar" class="h-4 w-4" />
-                          {Calendar.strftime(task.due_date, "%B %d, %Y")}
-                        </div>
-                      <% end %>
-                      <%= if task.user_id do %>
-                        <div class="flex items-center gap-1">
-                          <.icon name="hero-user" class="h-4 w-4" />
-                          {task.user.email}
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                  <div class="ml-4 flex-shrink-0">
+            <div
+              :for={task <- tasks}
+              class="p-4 hover:bg-gray-50 cursor-move"
+              draggable="true"
+              phx-hook="DragSource"
+              id={"task-#{task.id}"}
+              data-task-id={task.id}
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
                     <.link
-                      patch={~p"/projects/#{@project.id}/tasks/#{task.id}/edit"}
-                      class="text-indigo-600 hover:text-indigo-900"
+                      patch={~p"/projects/#{@project.id}/tasks/#{task.id}"}
+                      class="text-sm font-medium text-gray-900 hover:text-indigo-600"
                     >
-                      Edit
+                      {task.title}
                     </.link>
+                    <span class={[
+                      "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
+                      priority_color(task.priority)
+                    ]}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <%= if task.description do %>
+                    <p class="mt-1 text-sm text-gray-500 line-clamp-2">{task.description}</p>
+                  <% end %>
+                  <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                    <%= if task.due_date do %>
+                      <div class="flex items-center gap-1">
+                        <.icon name="hero-calendar" class="h-4 w-4" />
+                        {Calendar.strftime(task.due_date, "%B %d, %Y")}
+                      </div>
+                    <% end %>
+                    <%= if task.user_id do %>
+                      <div class="flex items-center gap-1">
+                        <.icon name="hero-user" class="h-4 w-4" />
+                        {task.user.email}
+                      </div>
+                    <% end %>
                   </div>
                 </div>
+                <div class="ml-4 flex-shrink-0">
+                  <.link
+                    patch={~p"/projects/#{@project.id}/tasks/#{task.id}/edit"}
+                    class="text-indigo-600 hover:text-indigo-900"
+                  >
+                    Edit
+                  </.link>
+                </div>
               </div>
-            <% end %>
+            </div>
           </div>
         </div>
       </div>
@@ -101,5 +105,15 @@
         return_to={~p"/projects/#{@project.id}/tasks"}
       />
     </.modal>
+  <% end %>
+
+  <%= if @live_action == :show do %>
+    <.live_component
+      module={TaskflowWeb.TaskLive.TaskDetailsComponent}
+      id={@task.id}
+      task={@task}
+      project={@project}
+      current_user={@current_user}
+    />
   <% end %>
 </div>

@@ -71,6 +71,7 @@ defmodule TaskflowWeb.Router do
       live "/projects/:id/edit", ProjectLive.Index, :edit
       live "/projects/:project_id/tasks", TaskLive.Index, :index
       live "/projects/:project_id/tasks/new", TaskLive.Index, :new
+      live "/projects/:project_id/tasks/:id", TaskLive.Index, :show
       live "/projects/:project_id/tasks/:id/edit", TaskLive.Index, :edit
 
       live "/users/settings", UserSettingsLive, :edit

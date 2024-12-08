@@ -9,7 +9,9 @@ import Config
 
 config :taskflow,
   ecto_repos: [Taskflow.Repo],
-  generators: [timestamp_type: :utc_datetime, binary_id: true]
+  generators: [timestamp_type: :utc_datetime, binary_id: true],
+  uploads_directory: Path.expand("../priv/uploads", __DIR__),
+  max_upload_size: 10_000_000
 
 # Configures the endpoint
 config :taskflow, TaskflowWeb.Endpoint,
@@ -30,11 +32,6 @@ config :taskflow, TaskflowWeb.Endpoint,
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 config :taskflow, Taskflow.Mailer, adapter: Swoosh.Adapters.Local
-
-config :taskflow, Taskflow.Uploads,
-  directory: Path.expand("../priv/uploads", __DIR__),
-  # 10 MB
-  max_file_size: 10_000_000
 
 # Configure esbuild (the version is required)
 config :esbuild,
