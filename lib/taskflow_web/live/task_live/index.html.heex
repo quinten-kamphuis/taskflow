@@ -19,96 +19,73 @@
     </div>
   </div>
 
-  <div class="mt-8 flex flex-col">
-    <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-      <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-          <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                >
-                  Title
-                </th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Status
-                </th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Priority
-                </th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Assigned To
-                </th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  Due Date
-                </th>
-                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span class="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-              <%= for task <- @tasks do %>
-                <tr id={"task-#{task.id}"}>
-                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                    <div class="font-medium text-gray-900">{task.title}</div>
-                    <div class="text-gray-500">{task.description}</div>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm">
-                    <span class={[
-                      "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
-                      status_color(task.status)
-                    ]}>
-                      {format_status(task.status)}
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm">
-                    <span class={[
-                      "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
-                      priority_color(task.priority)
-                    ]}>
-                      {task.priority}
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <%= if task.user do %>
-                      {task.user.email}
-                    <% else %>
-                      <span class="text-gray-400">Unassigned</span>
+  <div class="mt-8 flex gap-4 overflow-x-auto pb-4">
+    <%= for {status, tasks} <- group_tasks_by_status(@tasks) do %>
+      <div
+        class="flex-1 min-w-[320px]"
+        phx-hook="DropTarget"
+        id={"status-#{status}"}
+        data-status={status}
+      >
+        <div class="bg-gray-50 px-4 py-3 rounded-t-lg border border-gray-200 border-b-0">
+          <h3 class="text-sm font-medium text-gray-900">{format_status(status)}</h3>
+          <p class="text-sm text-gray-500 mt-1">{length(tasks)} tasks</p>
+        </div>
+
+        <div class="bg-white rounded-b-lg border border-gray-200 min-h-[500px]">
+          <div class="divide-y divide-gray-200">
+            <%= for task <- tasks do %>
+              <div
+                class="p-4 hover:bg-gray-50 cursor-move"
+                draggable="true"
+                phx-hook="DragSource"
+                id={"task-#{task.id}"}
+                data-task-id={task.id}
+              >
+                <div class="flex items-start justify-between">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm font-medium text-gray-900">{task.title}</p>
+                      <span class={[
+                        "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
+                        priority_color(task.priority)
+                      ]}>
+                        {task.priority}
+                      </span>
+                    </div>
+                    <%= if task.description do %>
+                      <p class="mt-1 text-sm text-gray-500 line-clamp-2">{task.description}</p>
                     <% end %>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    <%= if task.due_date do %>
-                      {Calendar.strftime(task.due_date, "%B %d, %Y")}
-                    <% else %>
-                      <span class="text-gray-400">No due date</span>
-                    <% end %>
-                  </td>
-                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                      <%= if task.due_date do %>
+                        <div class="flex items-center gap-1">
+                          <.icon name="hero-calendar" class="h-4 w-4" />
+                          {Calendar.strftime(task.due_date, "%B %d, %Y")}
+                        </div>
+                      <% end %>
+                      <%= if task.user_id do %>
+                        <div class="flex items-center gap-1">
+                          <.icon name="hero-user" class="h-4 w-4" />
+                          {task.user.email}
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                  <div class="ml-4 flex-shrink-0">
                     <.link
                       patch={~p"/projects/#{@project.id}/tasks/#{task.id}/edit"}
                       class="text-indigo-600 hover:text-indigo-900"
                     >
                       Edit
                     </.link>
-                    <.link
-                      phx-click="delete"
-                      phx-value-id={task.id}
-                      data-confirm="Are you sure?"
-                      class="text-red-600 hover:text-red-900 ml-4"
-                    >
-                      Delete
-                    </.link>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
         </div>
       </div>
-    </div>
+    <% end %>
   </div>
 
   <%= if @live_action in [:new, :edit] do %>

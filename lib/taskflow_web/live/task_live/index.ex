@@ -5,13 +5,12 @@ defmodule TaskflowWeb.TaskLive.Index do
   alias Taskflow.Tasks.Task
   alias Taskflow.Projects
 
-  defp status_color(status) do
-    case status do
-      "todo" -> "bg-gray-100 text-gray-800"
-      "in_progress" -> "bg-yellow-100 text-yellow-800"
-      "in_review" -> "bg-blue-100 text-blue-800"
-      "done" -> "bg-green-100 text-green-800"
-    end
+  defp group_tasks_by_status(tasks) do
+    tasks_by_status = Enum.group_by(tasks, & &1.status)
+
+    # Ensure all statuses exist in the map, even if empty
+    ~w(todo in_progress in_review done)
+    |> Map.new(fn status -> {status, Map.get(tasks_by_status, status, [])} end)
   end
 
   defp priority_color(priority) do
@@ -84,6 +83,26 @@ defmodule TaskflowWeb.TaskLive.Index do
     {:ok, _} = Tasks.delete_task(task)
 
     {:noreply, assign(socket, :tasks, Tasks.list_project_tasks(socket.assigns.project.id))}
+  end
+
+  @impl true
+  def handle_event("update_task_status", %{"task_id" => task_id, "status" => status}, socket) do
+    task = Tasks.get_project_task(socket.assigns.project.id, task_id)
+
+    case Tasks.update_task_status(task, status) do
+      {:ok, updated_task} ->
+        # Broadcast the change to all clients
+        Phoenix.PubSub.broadcast(
+          Taskflow.PubSub,
+          "project_tasks:#{socket.assigns.project.id}",
+          {:task_updated, updated_task}
+        )
+
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not update task status")}
+    end
   end
 
   @impl true
