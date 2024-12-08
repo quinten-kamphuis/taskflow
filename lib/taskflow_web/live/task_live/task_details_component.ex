@@ -8,6 +8,7 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
   def mount(socket) do
     {:ok,
      socket
+     |> assign(:delete_modal_attachment_id, nil)
      |> assign(:comment_form, to_form(%{"content" => ""}))
      |> allow_upload(:attachment,
        accept: :any,
@@ -99,6 +100,15 @@ defmodule TaskflowWeb.TaskLive.TaskDetailsComponent do
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not delete attachment")}
     end
+  end
+
+  @impl true
+  def handle_event("show_delete_modal", %{"id" => id}, socket) do
+    {:noreply, assign(socket, :delete_modal_attachment_id, id)}
+  end
+
+  def handle_event("cancel_delete", _, socket) do
+    {:noreply, assign(socket, :delete_modal_attachment_id, nil)}
   end
 
   defp handle_progress(:attachment, entry, socket) do
