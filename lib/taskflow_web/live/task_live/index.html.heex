@@ -1,0 +1,128 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="sm:flex sm:items-center">
+    <div class="sm:flex-auto">
+      <div class="flex items-center gap-4">
+        <.link navigate={~p"/projects"} class="text-gray-500 hover:text-gray-700">
+          <.icon name="hero-arrow-left" class="h-5 w-5" />
+        </.link>
+        <h1 class="text-2xl font-semibold text-gray-900">{@project.name} - Tasks</h1>
+      </div>
+      <p class="mt-2 text-sm text-gray-700">Manage and track tasks for this project.</p>
+    </div>
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+      <.link
+        patch={~p"/projects/#{@project.id}/tasks/new"}
+        class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+      >
+        New Task
+      </.link>
+    </div>
+  </div>
+
+  <div class="mt-8 flex flex-col">
+    <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+      <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+          <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                >
+                  Title
+                </th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  Status
+                </th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  Priority
+                </th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  Assigned To
+                </th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  Due Date
+                </th>
+                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                  <span class="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <%= for task <- @tasks do %>
+                <tr id={"task-#{task.id}"}>
+                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                    <div class="font-medium text-gray-900">{task.title}</div>
+                    <div class="text-gray-500">{task.description}</div>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm">
+                    <span class={[
+                      "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
+                      status_color(task.status)
+                    ]}>
+                      {format_status(task.status)}
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm">
+                    <span class={[
+                      "inline-flex rounded-full px-2 text-xs font-semibold leading-5",
+                      priority_color(task.priority)
+                    ]}>
+                      {task.priority}
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    <%= if task.user do %>
+                      {task.user.email}
+                    <% else %>
+                      <span class="text-gray-400">Unassigned</span>
+                    <% end %>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    <%= if task.due_date do %>
+                      {Calendar.strftime(task.due_date, "%B %d, %Y")}
+                    <% else %>
+                      <span class="text-gray-400">No due date</span>
+                    <% end %>
+                  </td>
+                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    <.link
+                      patch={~p"/projects/#{@project.id}/tasks/#{task.id}/edit"}
+                      class="text-indigo-600 hover:text-indigo-900"
+                    >
+                      Edit
+                    </.link>
+                    <.link
+                      phx-click="delete"
+                      phx-value-id={task.id}
+                      data-confirm="Are you sure?"
+                      class="text-red-600 hover:text-red-900 ml-4"
+                    >
+                      Delete
+                    </.link>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%= if @live_action in [:new, :edit] do %>
+    <.modal id="task-modal" show={true} on_cancel={JS.patch(~p"/projects/#{@project.id}/tasks")}>
+      <.live_component
+        module={TaskflowWeb.TaskLive.FormComponent}
+        id={@task.id || :new}
+        title={@page_title}
+        action={@live_action}
+        task={@task}
+        project={@project}
+        current_user={@current_user}
+        return_to={~p"/projects/#{@project.id}/tasks"}
+      />
+    </.modal>
+  <% end %>
+</div>

@@ -11,6 +11,8 @@ defmodule Taskflow.Projects.Project do
 
     belongs_to :user, Taskflow.Accounts.User
 
+    has_many :tasks, Taskflow.Tasks.Task
+
     timestamps()
   end
 

@@ -52,7 +52,13 @@
                       {project.status}
                     </span>
                   </td>
-                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
+                    <.link
+                      navigate={~p"/projects/#{project.id}/tasks"}
+                      class="text-indigo-600 hover:text-indigo-900"
+                    >
+                      Tasks
+                    </.link>
                     <.link
                       patch={~p"/projects/#{project.id}/edit"}
                       class="text-indigo-600 hover:text-indigo-900"
@@ -63,7 +69,7 @@
                       phx-click="delete"
                       phx-value-id={project.id}
                       data-confirm="Are you sure?"
-                      class="text-red-600 hover:text-red-900 ml-4"
+                      class="text-red-600 hover:text-red-900"
                     >
                       Delete
                     </.link>
