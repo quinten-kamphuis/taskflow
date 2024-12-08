@@ -15,6 +15,7 @@ defmodule TaskflowWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug TaskflowWeb.APIAuthPlug
   end
 
   scope "/", TaskflowWeb do
@@ -23,10 +24,12 @@ defmodule TaskflowWeb.Router do
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", TaskflowWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", TaskflowWeb.API do
+    pipe_through :api
+
+    get "/projects", ProjectController, :index
+    get "/projects/:project_id/tasks", TaskController, :index
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:taskflow, :dev_routes) do
