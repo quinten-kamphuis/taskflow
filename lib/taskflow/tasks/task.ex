@@ -13,6 +13,8 @@ defmodule Taskflow.Tasks.Task do
 
     belongs_to :project, Taskflow.Projects.Project
     belongs_to :user, Taskflow.Accounts.User
+    has_many :comments, Taskflow.Comments.Comment
+    has_many :attachments, Taskflow.Attachments.Attachment
 
     timestamps()
   end

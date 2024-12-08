@@ -31,6 +31,11 @@ config :taskflow, TaskflowWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :taskflow, Taskflow.Mailer, adapter: Swoosh.Adapters.Local
 
+config :taskflow, Taskflow.Uploads,
+  directory: Path.expand("../priv/uploads", __DIR__),
+  # 10 MB
+  max_file_size: 10_000_000
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",
