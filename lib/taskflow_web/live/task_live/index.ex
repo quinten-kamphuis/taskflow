@@ -31,24 +31,31 @@ defmodule TaskflowWeb.TaskLive.Index do
 
   @impl true
   def mount(%{"project_id" => project_id}, _session, socket) do
-    # Ensure the project exists and belongs to the current user
-    case Projects.get_user_project(socket.assigns.current_user.id, project_id) do
-      nil ->
+    try do
+      case Projects.get_user_project(socket.assigns.current_user.id, project_id) do
+        nil ->
+          {:ok,
+           socket
+           |> put_flash(:error, "Project not found")
+           |> push_navigate(to: ~p"/projects")}
+
+        project ->
+          if connected?(socket) do
+            Phoenix.PubSub.subscribe(Taskflow.PubSub, "project_tasks:#{project_id}")
+          end
+
+          {:ok,
+           socket
+           |> assign(:project, project)
+           |> assign(:tasks, Tasks.list_project_tasks(project_id))
+           |> assign(:page_title, "#{project.name} - Tasks")}
+      end
+    rescue
+      Ecto.Query.CastError ->
         {:ok,
          socket
-         |> put_flash(:error, "Project not found")
+         |> put_flash(:error, "Invalid project ID")
          |> push_navigate(to: ~p"/projects")}
-
-      project ->
-        if connected?(socket) do
-          Phoenix.PubSub.subscribe(Taskflow.PubSub, "project_tasks:#{project_id}")
-        end
-
-        {:ok,
-         socket
-         |> assign(:project, project)
-         |> assign(:tasks, Tasks.list_project_tasks(project_id))
-         |> assign(:page_title, "#{project.name} - Tasks")}
     end
   end
 
